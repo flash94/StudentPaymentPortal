@@ -75,6 +75,21 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
+    public String findStudentById(String studentId, Model model) {
+        Student student = studentRepository.findById(studentId).orElseThrow(()->{return new StudentNotFoundException(studentId);});
+        if (student == null) {
+            throw new StudentNotFoundException(studentId);
+        }
+        StudentDto studentProfile = modelMapper.map(student, StudentDto.class);
+        model.addAttribute("studentProfile", studentProfile);
+        model.addAttribute("editMode", false);
+        GeneratedResponseMessage responseMessage = new GeneratedResponseMessage();
+
+        model.addAttribute("responseMessage", responseMessage);
+        return "profile";
+    }
+
+    @Override
     public StudentDto UpdateStudent(CreateStudentDto updateRequest) {
         Student s = modelMapper.map(updateRequest, Student.class);
         Student student = studentRepository.save(s);
@@ -94,6 +109,7 @@ public class StudentServiceImpl implements StudentService {
         return modelMapper.map(upgradedStudent, StudentDto.class);
 
     }
+
 
     public CreateStudentFinanceAccountResponse CreateStudentFinanceAccount(String studentRgNumber){
         String url = studentPortalProperties.getFinanceAccountBaseUrl();
@@ -115,13 +131,11 @@ public class StudentServiceImpl implements StudentService {
 
     }
 
+
     @Override
-    public StudentDto updateStudentByRegNumber(String studentRegistrationNumber, CreateStudentDto updateRequest) {
+    public String updateStudentById(String studentId, CreateStudentDto updateRequest, Model model) {
         //Student studentOptional = studentRepository.findByStudentRegNumber(studentRegNumber).orElseThrow(()->{return new StudentNotFoundException(id);});
-        Student existingStudent = studentRepository.findByStudentRegistrationNumber(studentRegistrationNumber);
-        if (existingStudent == null) {
-            throw new StudentNotFoundException(studentRegistrationNumber);
-        }
+        Student existingStudent = studentRepository.findById(studentId).orElseThrow(()->{return new StudentNotFoundException(studentId);});
 
         updateField(updateRequest.getFirstName(), existingStudent::setFirstName);
         updateField(updateRequest.getLastName(), existingStudent::setLastName);
@@ -130,7 +144,13 @@ public class StudentServiceImpl implements StudentService {
         updateField(updateRequest.getDepartment(), existingStudent::setDepartment );
 
         Student updatedStudent = studentRepository.save(existingStudent);
-        return modelMapper.map(updatedStudent, StudentDto.class);
+        StudentDto updatedStudentDto = modelMapper.map(updatedStudent, StudentDto.class);
+        GeneratedResponseMessage responseMessage = new GeneratedResponseMessage();
+        responseMessage.setSuccessMessage("Student profile updated successfully");
+
+        model.addAttribute("responseMessage", responseMessage);
+        model.addAttribute("studentProfile", updatedStudentDto);
+        return "redirect:/api/v1/students/profile/" + updatedStudent.getId();
     }
 
     private <T> void updateField(T value, Consumer<T> setter) {
@@ -207,19 +227,20 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public CreateStudentFinanceAccountResponse checkGraduationEligibility(String studentRegistrationNumber) {
+    public String checkGraduationEligibility(String studentRegistrationNumber, Model model) {
         String url = studentPortalProperties.getFinanceAccountBaseUrl();
-        //String extendUrl = url + "xxx";
+        String extendUrl = url + "student/" + studentRegistrationNumber;
 
         CreateStudentFinanceAccountResponse data =  webClient.get()
-                .uri(url)
+                .uri(extendUrl)
                 .retrieve()
                 .bodyToMono(CreateStudentFinanceAccountResponse.class)
                 .timeout(Duration.ofMillis(60000))
                 .block();
 
         System.out.println(data);
-        return data;
+        model.addAttribute("graduationData", data);
+        return "graduation";
 
     }
 }

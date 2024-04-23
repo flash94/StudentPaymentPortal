@@ -16,13 +16,17 @@
         .option {
             margin: 10px;
         }
+        .top-label {
+            margin-top: 70px;
+            margin-bottom: 12px;
+        }
     </style>
 </head>
 <body>
 <div th:replace="fragments/nav"></div>
 <div class="container">
 
-    <h1 class="text-center">Welcome, <span th:text="${studentData.userName}"></span>!</h1>
+    <h1 class="top-label">Welcome, <span th:text="${studentData.userName}"></span>!</h1>
     <div class="options">
         <div class="card option" style="width: 18rem;">
             <div class="card-body">
@@ -35,7 +39,7 @@
             <div class="card-body">
                 <h5 class="card-title">View Profile</h5>
                 <p class="card-text">Click the button below to view your profile.</p>
-                <a href="/profile" class="btn btn-primary">View Profile</a>
+                <a th:href="@{/api/v1/students/profile/{studentId}(studentId=${studentData.id})}" class="btn btn-primary">View Profile</a>
             </div>
         </div>
         <div class="card option" style="width: 18rem;">
@@ -49,12 +53,23 @@
             <div class="card-body">
                 <h5 class="card-title">View Graduation</h5>
                 <p class="card-text">Click the button below to view your graduation status.</p>
-                <a href="/graduation" class="btn btn-primary">View Graduation</a>
+                <a th:href="@{/api/v1/students/graduate/{reg_number}(reg_number=${studentData.studentRegistrationNumber})}"
+                   class="btn btn-primary"
+                   onclick="checkStudentRegistrationNumber()">View Graduation</a>
             </div>
         </div>
     </div>
-
-
 </div>
+
+<script th:inline="javascript">
+    function checkStudentRegistrationNumber() {
+        var studentRegistrationNumber = /*[[${studentData.studentRegistrationNumber}]]*/ null;
+        if (!studentRegistrationNumber) {
+            alert("Service is not available. You are not a student yet!");
+            return false; // Prevent default action (navigation)
+        }
+        return true; // Allow navigation
+    }
+</script>
 </body>
 </html>

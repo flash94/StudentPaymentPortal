@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Graduation Page</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .container h1 {
+            font-size: 36px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .graduation-note {
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+
+        .graduation-label {
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+        .status-text {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="fragments/nav"></div>
+<div class="container">
+    <h1>Graduation</h1>
+    <div class="graduation-note">
+        <p>If you have completed all your requirements, you are eligible to graduate. Congratulations!</p>
+        <p>If you have outstanding balance, please make the payment to become eligible for graduation.</p>
+    </div>
+    <div class=".graduation-label">
+        <p>Graduation Status:</p>
+    </div>
+    <div class="status-text" th:if="${graduationData.hasOutstandingBalance}">You are not eligible for graduation. Please visit the payment portal to make outstanding payment.</div>
+    <div class="status-text" th:if="${!graduationData.hasOutstandingBalance}">You are eligible for graduation. Congratulations!</div>
+
+</div>
+
+
+</body>
+</html>

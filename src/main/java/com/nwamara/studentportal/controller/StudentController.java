@@ -1,5 +1,6 @@
 package com.nwamara.studentportal.controller;
 
+import com.nwamara.studentportal.Helper.Constant;
 import com.nwamara.studentportal.dto.*;
 import com.nwamara.studentportal.service.StudentService;
 import jakarta.validation.Valid;
@@ -29,6 +30,12 @@ public class StudentController {
         return studentService.fetch(regNumber);
     }
 
+    @GetMapping("/profile/{studentId}")
+    public String getStudentByStudentId(@PathVariable(name = "studentId", required = true) String studentId, Model model){
+        //studentId = Constant.studentId;
+        return studentService.findStudentById(studentId, model);
+    }
+
     @GetMapping("/register")
     public String showRegisterForm(Model model) {
         model.addAttribute("createStudentDto", new CreateStudentDto());
@@ -39,9 +46,14 @@ public class StudentController {
         return studentService.create(createStudentDto, model);
     }
 
-    @PutMapping("/{reg_number}")
-    public StudentDto updateStudentByRegNumber(@PathVariable(name = "reg_number", required = true)String regNumber, @RequestBody @Valid CreateStudentDto dto){
-        return studentService.updateStudentByRegNumber(regNumber, dto);
+    @PostMapping("update/{student_id}")
+    public String updateStudentByRegNumber(@PathVariable(name = "student_id", required = true)String studentId, @RequestParam String firstName,
+                                           @RequestParam String lastName, Model model){
+        CreateStudentDto dto = CreateStudentDto.builder()
+                .firstName(firstName)
+                .lastName(lastName)
+                .build();
+        return studentService.updateStudentById(studentId, dto, model);
     }
 
     @PutMapping("upgrade/{id}")
@@ -61,8 +73,8 @@ public class StudentController {
     }
 
     @GetMapping("/graduate/{reg_number}")
-    public CreateStudentFinanceAccountResponse checkStudentCanGraduate(@PathVariable(name = "reg_number", required = true)String regNumber){
-        return  studentService.checkGraduationEligibility(regNumber);
+    public String checkStudentCanGraduate(@PathVariable(name = "reg_number", required = true)String regNumber, Model model){
+        return  studentService.checkGraduationEligibility(regNumber, model);
     }
 
 }

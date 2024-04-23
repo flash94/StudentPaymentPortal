@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>User Profile</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .container h1 {
+            font-size: 36px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="fragments/nav"></div>
+<div class="container">
+    <h1>User Profile</h1>
+    <form th:action="@{/api/v1/students/update/{studentId}(studentId=${studentProfile.id})}" method="post">
+        <div th:if="${responseMessage.successMessage}" class="alert alert-success" role="alert">
+            <p th:text="${responseMessage.successMessage}"></p>
+        </div>
+        <div th:if="${responseMessage.failedMessage}" class="alert alert-danger" role="alert">
+            <p th:text="${responseMessage.failedMessage}"></p>
+        </div>
+        <div class="form-group">
+            <label for="firstName">First Name:</label>
+            <input type="text" class="form-control" id="firstName" name="firstName" th:value="${studentProfile.firstName}" th:readonly="${not editMode}">
+        </div>
+        <div class="form-group">
+            <label for="lastName">Last Name:</label>
+            <input type="text" class="form-control" id="lastName" name="lastName" th:value="${studentProfile.lastName}" th:readonly="${not editMode}">
+        </div>
+        <div class="form-group">
+            <label for="studentId">Student ID:</label>
+            <input type="text" class="form-control" id="studentId" name="studentId" th:value="${studentProfile.studentRegistrationNumber}" readonly>
+        </div>
+        <button type="button" class="btn btn-primary" th:unless="${editMode}" th:onclick="|toggleEditMode()|">Edit</button>
+        <button type="submit" class="btn btn-success" style="display: none;">Submit</button>
+        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+    </form>
+
+    </form>
+</div>
+
+<script th:inline="javascript">
+
+    function toggleEditMode(csrfToken) {
+        var firstNameField = document.getElementById('firstName');
+        var lastNameField = document.getElementById('lastName');
+        var editButton = document.querySelector('.btn-primary');
+        var submitButton = document.querySelector('.btn-success');
+
+        firstNameField.readOnly = !firstNameField.readOnly;
+        lastNameField.readOnly = !lastNameField.readOnly;
+
+        if (editButton.textContent.trim() === 'Edit') {
+            editButton.textContent = 'Cancel';
+            submitButton.style.display = 'inline-block'; // Show the submit button
+        } else {
+            editButton.textContent = 'Edit';
+            submitButton.style.display = 'none'; // Hide the submit button
+        }
+    }
+</script>
+
+</body>
+</html>
