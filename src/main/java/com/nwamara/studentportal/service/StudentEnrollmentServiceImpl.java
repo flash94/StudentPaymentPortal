@@ -1,10 +1,13 @@
 package com.nwamara.studentportal.service;
 
 import com.nwamara.studentportal.config.StudentPortalProperties;
+import com.nwamara.studentportal.dao.CourseRepository;
 import com.nwamara.studentportal.dao.InvoiceRepository;
 import com.nwamara.studentportal.dao.StudentEnrollmentRepository;
 import com.nwamara.studentportal.dao.StudentRepository;
 import com.nwamara.studentportal.dto.*;
+import com.nwamara.studentportal.exception.CourseNotFoundException;
+import com.nwamara.studentportal.exception.NotFoundException;
 import com.nwamara.studentportal.exception.StringResponseException;
 import com.nwamara.studentportal.exception.StudentNotFoundException;
 import com.nwamara.studentportal.persistence.Course;
@@ -14,7 +17,9 @@ import com.nwamara.studentportal.persistence.StudentEnrollment;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.ui.Model;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -30,44 +35,87 @@ public class StudentEnrollmentServiceImpl implements StudentEnrollmentService{
     private final StudentService studentService;
     private final ModelMapper modelMapper;
     private final StudentRepository studentRepository;
+    private final CourseRepository courseRepository;
     private final WebClient webClient;
     private final StudentPortalProperties studentPortalProperties;
 
 
     @Autowired
-    public StudentEnrollmentServiceImpl(StudentEnrollmentRepository studentEnrollmentRepository, InvoiceRepository invoiceRepository, StudentService studentService, ModelMapper modelMapper, StudentRepository studentRepository, WebClient webClient, StudentPortalProperties studentPortalProperties) {
+    public StudentEnrollmentServiceImpl(StudentEnrollmentRepository studentEnrollmentRepository, InvoiceRepository invoiceRepository, StudentService studentService, ModelMapper modelMapper, StudentRepository studentRepository, CourseRepository courseRepository, WebClient webClient, StudentPortalProperties studentPortalProperties) {
         this.studentEnrollmentRepository = studentEnrollmentRepository;
         this.invoiceRepository = invoiceRepository;
         this.studentService = studentService;
         this.modelMapper = modelMapper;
         this.studentRepository = studentRepository;
+        this.courseRepository = courseRepository;
         this.webClient = webClient;
         this.studentPortalProperties = studentPortalProperties;
     }
     @Override
-    public EnrollmentResult enrollStudentInCourse(String id, Course course) {
+    public String enrollStudentInCourse(String id, String courseId, Model model, RedirectAttributes redirAttrs) {
         Student existingStudent = studentRepository.findById(id).orElseThrow(()->{return new StudentNotFoundException(id);});
+        Course course = courseRepository.findById(courseId).orElseThrow(()->{return new CourseNotFoundException(courseId);});
         List<Course> enrolledCourses = studentEnrollmentRepository.findCoursesByStudentId(id);
         if(enrolledCourses.isEmpty()){
             studentService.UpgradeStudentById(id);
-            return studentEnrollment(existingStudent, course);
+            GeneratedResponseMessage responseMessage = studentEnrollment(existingStudent, course);
+            if(responseMessage.getSuccessMessage() != null){
+                model.addAttribute("course", course);
+                boolean enrollmentSuccess = true;
+                model.addAttribute("enrollmentSuccess", enrollmentSuccess);
+                model.addAttribute("responseMessage", responseMessage);
+                //redirAttrs.addFlashAttribute("success", "The error XYZ occurred.");
+                return "courseDetailPage";
+            }
+            model.addAttribute("course", course);
+            boolean enrollmentFailed = true;
+            model.addAttribute("enrollmentFailed", enrollmentFailed);
+            model.addAttribute("responseMessage", responseMessage);
+            //redirAttrs.addFlashAttribute("success", "The error XYZ occurred.");
+            return "courseDetailPage";
         }
-        return studentEnrollment(existingStudent, course);
+        GeneratedResponseMessage responseMessage = studentEnrollment(existingStudent, course);
+        model.addAttribute("course", course);
+        boolean enrollmentSuccess = true;
+        model.addAttribute("enrollmentSuccess", enrollmentSuccess);
+        model.addAttribute("responseMessage", responseMessage);
+        return "courseDetailPage";
 
     }
 
     @Override
-    public List<Course> fetchStudentEnrolledCourses(String id) {
-        return studentEnrollmentRepository.findCoursesByStudentId(id);
+    public String fetchStudentEnrolledCourses(String id, Model model) {
+        List<Course> courses = studentEnrollmentRepository.findCoursesByStudentId(id);
+
+        if (courses.isEmpty()) {
+            throw new NotFoundException("No Course Found");
+        }
+
+        model.addAttribute("courses", courses);
+        return "enrollments";
+
+    }
+
+    @Override
+    public String fetchCourseById(Model model, String courseId) {
+        Course course = courseRepository.findById(courseId).orElseThrow(()->{return new CourseNotFoundException(courseId);});
+        GeneratedResponseMessage responseMessage = new GeneratedResponseMessage();
+        model.addAttribute("course", course);
+        model.addAttribute("responseMessage", responseMessage);
+
+        return  "enrollmentDetailPage";
     }
 
 
-    public EnrollmentResult studentEnrollment(Student student, Course course) {
+    public GeneratedResponseMessage studentEnrollment(Student student, Course course) {
 
         StudentEnrollment checkEnrollment = studentEnrollmentRepository.findByStudentIdAndCourseId(student.getId(), course.getId());
+        GeneratedResponseMessage responseMessage = new GeneratedResponseMessage();
         if(checkEnrollment != null){
-            throw  new StringResponseException("Student already enrolled in this course");
+            responseMessage.setFailedMessage("Student already enrolled in this course");
+            //throw  new StringResponseException("Student already enrolled in this course");
         }
+
 
         StudentEnrollment enrollment = new StudentEnrollment();
         //Student xStudent = modelMapper.map(studentDto, Student.class);
@@ -79,15 +127,18 @@ public class StudentEnrollmentServiceImpl implements StudentEnrollmentService{
                 generateInvoice(student.getStudentRegistrationNumber(), course, student) : null;
 
         if (invoiceResponseDto == null) {
-            throw new StringResponseException("Invoice generation failed: try again.");
+            responseMessage.setFailedMessage("Invoice generation failed: try again.");
+            //throw new StringResponseException("Invoice generation failed: try again.");
         }
-        EnrollmentResult result = new EnrollmentResult();
-        result.setStudentId(student.getId());
-        result.setEnrollmentId(savedEnrollment.getId());
-        result.setCourseId(course.getId());
-        result.setInvoiceReference(invoiceResponseDto.getReference());
+//        EnrollmentResult result = new EnrollmentResult();
+//        result.setStudentId(student.getId());
+//        result.setEnrollmentId(savedEnrollment.getId());
+//        result.setCourseId(course.getId());
+//        result.setInvoiceReference(invoiceResponseDto.getReference());
 
-        return result;
+        responseMessage.setSuccessMessage("You have successfully enrolled in this course");
+
+        return responseMessage;
     }
 
     public CreateInvoiceResponseDto generateInvoice(String studentRegNumber, Course course, Student student){

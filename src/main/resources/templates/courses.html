@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Course List</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div th:replace="fragments/nav"></div>
+<div class="container">
+    <h1>Course List</h1>
+    <table class="table">
+        <thead>
+        <tr>
+
+            <th>Title</th>
+            <th>Description</th>
+            <th>Fee</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="course : ${courses}">
+            <td th:text="${course.courseTitle}"></td>
+            <td th:text="${course.courseDescription}"></td>
+            <td th:text="'£' + ${course.courseFee}" ></td>
+            <td>
+                <a th:href="@{/api/v1/students/courses/{course_id}(course_id=${course.id})}" class="btn btn-primary">View Details</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

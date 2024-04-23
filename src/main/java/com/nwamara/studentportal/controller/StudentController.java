@@ -5,9 +5,11 @@ import com.nwamara.studentportal.service.StudentService;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-@RestController
+@Controller
 @RequestMapping("/api/v1/students")
 public class StudentController {
     private final StudentService studentService;
@@ -27,9 +29,14 @@ public class StudentController {
         return studentService.fetch(regNumber);
     }
 
-    @PostMapping("")
-    public StudentDto createStudent(@RequestBody @Valid CreateStudentDto dto){
-        return studentService.create(dto);
+    @GetMapping("/register")
+    public String showRegisterForm(Model model) {
+        model.addAttribute("createStudentDto", new CreateStudentDto());
+        return "register";
+    }
+    @PostMapping("/register")
+    public String createStudent(@ModelAttribute("createStudentDto") @Valid CreateStudentDto createStudentDto,Model model){
+        return studentService.create(createStudentDto, model);
     }
 
     @PutMapping("/{reg_number}")
@@ -42,9 +49,15 @@ public class StudentController {
         return studentService.UpgradeStudentById(id);
     }
 
+    @GetMapping({"", "/login", "/"})
+    public String showLoginForm(Model model) {
+        model.addAttribute("loginDto", new LoginDto());
+        return "login";
+    }
+
     @PostMapping("/login")
-    public LoginMessage loginStudent(@RequestBody @Valid LoginDto dto){
-        return  studentService.studentLogin(dto);
+    public String loginStudent(@ModelAttribute("loginDto") @Valid LoginDto dto, Model model){
+        return studentService.studentLogin(dto, model);
     }
 
     @GetMapping("/graduate/{reg_number}")

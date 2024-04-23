@@ -9,10 +9,11 @@ import com.nwamara.studentportal.exception.StudentNotFoundException;
 import com.nwamara.studentportal.exception.StudentWithRegNumberExistsException;
 import com.nwamara.studentportal.persistence.Student;
 import com.nwamara.studentportal.dao.StudentRepository;
+import org.mindrot.jbcrypt.BCrypt;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.ui.Model;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -23,6 +24,8 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import static com.nwamara.studentportal.Helper.Constant.studentId;
 
 @Service
 public class StudentServiceImpl implements StudentService {
@@ -42,17 +45,15 @@ public class StudentServiceImpl implements StudentService {
         this.studentPortalProperties = studentPortalProperties;
     }
 
-    @Autowired
-    public PasswordEncoder passwordEncoder;
-
     @Override
-    public StudentDto create(CreateStudentDto createStudentDto) {
+    public String create(CreateStudentDto createStudentDto, Model model) {
 
         String studentRegistrationNumber = createStudentDto.getStudentRegistrationNumber();
         String userName = createStudentDto.getUserName();
         String email = createStudentDto.getEmail();
         Boolean isStudent = false;
-        String password = this.passwordEncoder.encode(createStudentDto.getPassword());
+        String password = BCrypt.hashpw(createStudentDto.getPassword(), BCrypt.gensalt());
+        //String password = this.passwordEncoder.encode(createStudentDto.getPassword());
 
         Student eStudent = studentRepository.findByStudentRegistrationNumber(studentRegistrationNumber);
         if (eStudent != null) {
@@ -68,7 +69,9 @@ public class StudentServiceImpl implements StudentService {
 
         Student student = studentRepository.save(s);
         StudentDto studentDto = modelMapper.map(student, StudentDto.class);
-        return studentDto;
+        model.addAttribute("studentData", studentDto);
+        studentId = student.getId();
+        return "homepage";
     }
 
     @Override
@@ -179,20 +182,27 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public LoginMessage studentLogin(LoginDto loginRequest) {
-        String studentRegNumber = loginRequest.getStudentRegistrationNumber();
+    public String studentLogin(LoginDto loginRequest, Model model) {
+        String userName = loginRequest.getUsername();
         String password = loginRequest.getPassword();
-        Student student = studentRepository.findByStudentRegistrationNumber(studentRegNumber);
+        Student student = studentRepository.findByUserName(userName);
+        StudentDto studentDto = modelMapper.map(student, StudentDto.class);
         if (student == null) {
-            return new LoginMessage("User does not exist", false, studentRegNumber);
-            //throw new StudentNotFoundException(studentRegNumber);
+            //return new LoginMessage("User does not exist", false, studentRegNumber);
+            throw new StringResponseException("Student with username" + userName + "does not exist");
         }
         String encodedPassword = student.getPassword();
-        boolean isPwdMatch = passwordEncoder.matches(password, encodedPassword);
+        boolean isPwdMatch = BCrypt.checkpw(password, encodedPassword);
+        //boolean isPwdMatch = passwordEncoder.matches(password, encodedPassword);
         if (isPwdMatch) {
-            return new LoginMessage("Login Success", true, studentRegNumber);
+            LoginMessage loginMessage = new LoginMessage("Login Success", true, userName);
+            model.addAttribute("loginData", loginMessage);
+            model.addAttribute("studentData", studentDto);
+            studentId = student.getId();
+            return "homepage";
+
         } else {
-            return new LoginMessage("Incorrect Password", false, studentRegNumber);
+            throw  new StringResponseException("Incorrect Password");
         }
     }
 

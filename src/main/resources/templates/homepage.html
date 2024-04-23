@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome</title>
+    <!-- Add Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Custom styles */
+        .options {
+            display: flex;
+            justify-content: top;
+            align-items: center;
+            height: 70vh;
+        }
+        .option {
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="fragments/nav"></div>
+<div class="container">
+
+    <h1 class="text-center">Welcome, <span th:text="${studentData.userName}"></span>!</h1>
+    <div class="options">
+        <div class="card option" style="width: 18rem;">
+            <div class="card-body">
+                <h5 class="card-title">Enroll in a Course</h5>
+                <p class="card-text">Click the button below to view all available courses.</p>
+                <a href="/api/v1/students/courses" class="btn btn-primary">Enroll</a>
+            </div>
+        </div>
+        <div class="card option" style="width: 18rem;">
+            <div class="card-body">
+                <h5 class="card-title">View Profile</h5>
+                <p class="card-text">Click the button below to view your profile.</p>
+                <a href="/profile" class="btn btn-primary">View Profile</a>
+            </div>
+        </div>
+        <div class="card option" style="width: 18rem;">
+            <div class="card-body">
+                <h5 class="card-title">View Enrollments</h5>
+                <p class="card-text">Click the button below to view your enrolled courses.</p>
+                <a href="/api/v1/enroll/course" class="btn btn-primary">View Enrollments</a>
+            </div>
+        </div>
+        <div class="card option" style="width: 18rem;">
+            <div class="card-body">
+                <h5 class="card-title">View Graduation</h5>
+                <p class="card-text">Click the button below to view your graduation status.</p>
+                <a href="/graduation" class="btn btn-primary">View Graduation</a>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+</body>
+</html>
