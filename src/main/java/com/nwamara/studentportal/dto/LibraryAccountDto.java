@@ -4,13 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-public class GeneratedResponseMessage {
-    private String successMessage;
-    private String failedMessage;
-    private String addedData;
+@SuperBuilder
+public class LibraryAccountDto {
+    public String studentId;
 }

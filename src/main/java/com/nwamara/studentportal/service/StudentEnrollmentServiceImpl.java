@@ -57,8 +57,9 @@ public class StudentEnrollmentServiceImpl implements StudentEnrollmentService{
         Course course = courseRepository.findById(courseId).orElseThrow(()->{return new CourseNotFoundException(courseId);});
         List<Course> enrolledCourses = studentEnrollmentRepository.findCoursesByStudentId(id);
         if(enrolledCourses.isEmpty()){
-            studentService.UpgradeStudentById(id);
-            GeneratedResponseMessage responseMessage = studentEnrollment(existingStudent, course);
+            StudentDto upgradedStudent = studentService.UpgradeStudentById(id);
+            Student s =modelMapper.map(upgradedStudent, Student.class);
+            GeneratedResponseMessage responseMessage = studentEnrollment(s, course);
             if(responseMessage.getSuccessMessage() != null){
                 model.addAttribute("course", course);
                 boolean enrollmentSuccess = true;
@@ -112,7 +113,8 @@ public class StudentEnrollmentServiceImpl implements StudentEnrollmentService{
         StudentEnrollment checkEnrollment = studentEnrollmentRepository.findByStudentIdAndCourseId(student.getId(), course.getId());
         GeneratedResponseMessage responseMessage = new GeneratedResponseMessage();
         if(checkEnrollment != null){
-            responseMessage.setFailedMessage("Student already enrolled in this course");
+            responseMessage.setFailedMessage("You are already enrolled in this course");
+            return responseMessage;
             //throw  new StringResponseException("Student already enrolled in this course");
         }
 
@@ -126,7 +128,7 @@ public class StudentEnrollmentServiceImpl implements StudentEnrollmentService{
         CreateInvoiceResponseDto invoiceResponseDto = savedEnrollment.getId() != null ?
                 generateInvoice(student.getStudentRegistrationNumber(), course, student) : null;
 
-        if (invoiceResponseDto == null) {
+        if (invoiceResponseDto == null || invoiceResponseDto.getReference() == null) {
             responseMessage.setFailedMessage("Invoice generation failed: try again.");
             //throw new StringResponseException("Invoice generation failed: try again.");
         }
@@ -137,6 +139,7 @@ public class StudentEnrollmentServiceImpl implements StudentEnrollmentService{
 //        result.setInvoiceReference(invoiceResponseDto.getReference());
 
         responseMessage.setSuccessMessage("You have successfully enrolled in this course");
+        responseMessage.setAddedData(invoiceResponseDto.getReference());
 
         return responseMessage;
     }

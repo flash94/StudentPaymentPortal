@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    restart: always
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5433:5432"  # Map port 5433 on the host to port 5432 on the container
+    environment:
+      POSTGRES_PASSWORD: ${DB_ROOT_PASSWORD}
+
+  studentapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: student-app:1.1
+    ports:
+      - "8086:8086"  # Map port 8081 on the host to port 8080 on the container
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_APPLICATION_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_APPLICATION_PASSWORD}
+

@@ -39,14 +39,16 @@
             <div class="card-body">
                 <h5 class="card-title">View Profile</h5>
                 <p class="card-text">Click the button below to view your profile.</p>
-                <a th:href="@{/api/v1/students/profile/{studentId}(studentId=${studentData.id})}" class="btn btn-primary">View Profile</a>
+                <a th:href="@{/api/v1/students/profile/{studentId}(studentId=${studentData.id})}" class="btn btn-primary"
+                   onclick="checkStudentRegistrationNumber()">View Profile</a>
             </div>
         </div>
         <div class="card option" style="width: 18rem;">
             <div class="card-body">
                 <h5 class="card-title">View Enrollments</h5>
                 <p class="card-text">Click the button below to view your enrolled courses.</p>
-                <a href="/api/v1/enroll/course" class="btn btn-primary">View Enrollments</a>
+                <a href="/api/v1/enroll/course" class="btn btn-primary"
+                   onclick="checkStudentRegistrationNumber()">View Enrollments</a>
             </div>
         </div>
         <div class="card option" style="width: 18rem;">

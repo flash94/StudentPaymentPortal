@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Configuration;
 public class StudentPortalProperties {
     public String financeAccountBaseUrl;
     public String financeInvoicesBaseUrl;
+    public String libraryBaseUrl;
 
 }
 

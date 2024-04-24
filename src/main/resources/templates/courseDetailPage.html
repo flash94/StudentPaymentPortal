@@ -53,7 +53,8 @@
         <dd class="col-sm-9" th:text="'£' + ${course.courseFee}"></dd>
     </dl>
     <div th:if="${responseMessage.successMessage}" class="alert alert-success" role="alert">
-        Congratulations! You have successfully enrolled in the course.
+        Congratulations! You have successfully enrolled in the course. Your payment reference:
+        <span th:text="${responseMessage.addedData}"></span>
     </div>
     <div th:if="${responseMessage.failedMessage}" class="alert alert-danger" role="alert">
         <p th:text="${responseMessage.failedMessage}"></p>

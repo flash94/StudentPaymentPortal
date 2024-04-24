@@ -70,7 +70,9 @@ public class StudentServiceImpl implements StudentService {
         Student student = studentRepository.save(s);
         StudentDto studentDto = modelMapper.map(student, StudentDto.class);
         model.addAttribute("studentData", studentDto);
-        studentId = student.getId();
+        if(student != null){
+            studentId = student.getId();
+        }
         return "homepage";
     }
 
@@ -105,7 +107,9 @@ public class StudentServiceImpl implements StudentService {
         Student upgradedStudent = studentRepository.save(existingStudent);
 
         //create student in finance service
+        CreateStudentLibraryAccount(upgradedStudent.getStudentRegistrationNumber());
         CreateStudentFinanceAccount(upgradedStudent.getStudentRegistrationNumber());
+
         return modelMapper.map(upgradedStudent, StudentDto.class);
 
     }
@@ -129,6 +133,25 @@ public class StudentServiceImpl implements StudentService {
         return data;
 
 
+    }
+
+
+    public CreateStudentFinanceAccountResponse CreateStudentLibraryAccount(String studentRgNumber){
+        String url = studentPortalProperties.getLibraryBaseUrl();
+        String extendUrl = url + "register";
+        LibraryAccountDto request = LibraryAccountDto.builder()
+                .studentId(studentRgNumber)
+                .build();
+
+        CreateStudentFinanceAccountResponse data =  webClient.post()
+                .uri(extendUrl)
+                .body(Mono.just(request), LibraryAccountDto.class)
+                .retrieve()
+                .bodyToMono(CreateStudentFinanceAccountResponse.class)
+                .timeout(Duration.ofMillis(60000))
+                .block();
+        System.out.println(data);
+        return data;
     }
 
 
